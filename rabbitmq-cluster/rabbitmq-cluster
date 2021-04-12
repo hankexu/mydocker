@@ -1,0 +1,25 @@
+#!/bin/bash
+
+hostname=`hostname`
+
+if [ -z "$CLUSTER_WITH" -o "$CLUSTER_WITH" = "$hostname" ]; then
+  echo "Running as single server"
+  rabbitmq-server
+  rabbitmqctl cluster_status
+else
+  echo "Running as clustered server"
+  rabbitmq-server -detached
+  while [ ! -f "/var/log/rabbitmq/log/crash.log" ]; do
+    echo "waiting"
+    sleep 2s
+  done
+  echo "running"
+  rabbitmqctl stop_app
+  echo $RABBITMQ_NODENAME@$CLUSTER_WITH
+#
+  echo "Joining cluster $CLUSTER_WITH"
+  rabbitmqctl join_cluster ${ENABLE_RAM:+--ram} $RABBITMQ_NODENAME@$CLUSTER_WITH
+#
+  rabbitmqctl start_app
+  tail -f /var/log/rabbitmq/log/*
+fi

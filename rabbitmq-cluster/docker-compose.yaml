@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  rabbitmq-node1:
+    hostname: node1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - rabbitmq
+    container_name: rabbitmq-node1
+    env_file: .env.master
+  rabbitmq-node2:
+    hostname: node2
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - rabbitmq
+    container_name: rabbitmq-node2
+    env_file: .env.slave
+    depends_on:
+      - rabbitmq-node1
+  rabbitmq-node3:
+    hostname: node3
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - rabbitmq
+    container_name: rabbitmq-node3
+    env_file: .env.slave
+    depends_on:
+      - rabbitmq-node1
+networks:
+  rabbitmq:
