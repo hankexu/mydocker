@@ -31,5 +31,19 @@ services:
     env_file: .env.slave
     depends_on:
       - rabbitmq-node1
+  haproxy:
+    image: haproxy
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - rabbitmq-node1
+      - rabbitmq-node2
+      - rabbitmq-node3
+    networks:
+      - rabbitmq
+    ports:
+      - 1936:1936
+      - 25672:15672
+      - 6672:5672
 networks:
   rabbitmq:

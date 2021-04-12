@@ -15,5 +15,5 @@ if [ "$ERLANG_COOKIE" ]; then
         chown rabbitmq "$cookieFile"
     fi
 fi
-
+echo $ERLANG_COOKIE
 exec gosu rabbitmq docker-entrypoint.sh "$@"
