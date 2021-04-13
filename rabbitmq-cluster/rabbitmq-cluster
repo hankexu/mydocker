@@ -1,22 +1,28 @@
 #! /bin/bash
 hostname=$(hostname)
 
-if [ -z "$CLUSTER_WITH" -o "$CLUSTER_WITH" = "$hostname" ]; then
-  rabbitmq-server
-#  while [ ! -f "/var/log/rabbitmq/log/crash.log" ]; do
-#    echo "waiting"
-#    sleep 2s
-#  done
-#  echo "running"
-#  rabbitmqctl start_app
-#  if [ "$RABBITMQ_DEFAULT_USER" ]; then
-#      if [ ! "$RABBITMQ_DEFAULT_PASS" ]; then
-#        RABBITMQ_DEFAULT_PASS=public
-#      fi
-#      rabbitmqctl add_user "$RABBITMQ_DEFAULT_USER" "$RABBITMQ_DEFAULT_PASS"
-#      rabbitmqctl set_user_tags "$RABBITMQ_DEFAULT_USER" administrator
-#      rabbitmqctl set_permissions "$RABBITMQ_DEFAULT_USER" / '.*' '.*' '.*'
-#  fi
+if [ -z "$CLUSTER_WITH" ] || [ "$CLUSTER_WITH" = "$hostname" ]; then
+  rabbitmq-server &
+  while [ ! -f "/var/log/rabbitmq/log/crash.log" ]; do
+    echo "waiting"
+    sleep 2s
+  done
+  echo "running"
+  check_result=$(rabbitmqctl status)
+  while [ -z "$check_result" ]; do
+    check_result=$(rabbitmqctl status)
+    sleep 5s
+  done
+  if [ "$RABBITMQ_DEFAULT_USER" ]; then
+      if [ ! "$RABBITMQ_DEFAULT_PASS" ]; then
+        RABBITMQ_DEFAULT_PASS=public
+      fi
+      rabbitmqctl add_user "$RABBITMQ_DEFAULT_USER" "$RABBITMQ_DEFAULT_PASS"
+      rabbitmqctl set_user_tags "$RABBITMQ_DEFAULT_USER" administrator
+      rabbitmqctl set_permissions "$RABBITMQ_DEFAULT_USER" '.*' '.*' '.*'
+      rabbitmqctl set_policy ha-all "^" '{"ha-mode":"all"}'
+  fi
+  tail -f /var/log/rabbitmq/log/*
 else
   echo "Running as clustered server"
   rabbitmq-server -detached
